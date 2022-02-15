@@ -1,10 +1,15 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from 'react';
 import { styled, makeStyles } from "@mui/styles"
 import { Grid, TextField, Button } from "@mui/material"
 import { flexbox, fontSize, padding } from "@mui/system"
 import Avatar from "@mui/material/Avatar"
 import { ServerURL, postData, postDataAndImage, getData } from "./FetchNodeServices";
 import Swal from "sweetalert2";
+import Box from '@mui/material/Box';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
 
 const useStyles = makeStyles((theme) => ({
 
@@ -25,9 +30,6 @@ const useStyles = makeStyles((theme) => ({
         display: 'none'
     },
 
-
-
-
 }))
 
 const CssTextField = styled(TextField)({
@@ -40,7 +42,7 @@ const CssTextField = styled(TextField)({
     '& .MuiOutlinedInput-root': {
         '& fieldset': {
             borderColor: '#2d3436',
-            borderRadius:0
+            borderRadius: 0
         },
         '&:hover fieldset': {
             borderColor: '#2d3436',
@@ -51,38 +53,73 @@ const CssTextField = styled(TextField)({
     },
 });
 
-export default function Category(props) {
+export default function SubCategory(props) {
 
     const classes = useStyles()
 
+    const [subCategoryIcon, setSubCategoryIcon] = useState({ byte: '', file: '/uploadicon.png' })
 
-    const [categoryIcon, setCategoryIcon] = useState({ byte: '', file: '/uploadicon.png' })
-    const [categoryName, setCategoryName] = useState('')
+    const [subCategoryName, setSubCategoryName] = useState('')
+    const [subCategoryId, setSubCategoryId] = useState('')
+    const [description, setDescription] = useState('')
+    const [categories , setCategories] = useState('')
+    const [listCategories , setListCategories] = useState([])
+
+
+    
+    const handleCategoriesChange = (event) => {
+        setCategories(event.target.value);
+    };
+
+
 
     const handleIconChange = (event) => {
         if (event.target.value.length) {
-            setCategoryIcon({ byte: event.target.files[0], file: URL.createObjectURL(event.target.files[0]) })
+            setSubCategoryIcon({ byte: event.target.files[0], file: URL.createObjectURL(event.target.files[0]) })
         }
     }
+
+    const fetchAllCategories = async() => {
+
+        var result = await getData('subcategory/fetchallcategories')
+        setListCategories(result.result)
+    }
+
+    const fillCategories=()=>{
+
+        return(listCategories.map((item)=>{
+           return(<MenuItem value={item.categoryid}>{item.categoryname}</MenuItem> )
+        }))
+     }
+
+     useEffect(function(){
+
+        fetchAllCategories()
+        
+
+     },[])
 
     const handleSubmit = async () => {
 
         var formData = new FormData()
 
-        formData.append('categoryname',categoryName )
-        formData.append('icon', categoryIcon.byte)
-         
+        formData.append('subcategoryname', subCategoryName)
+        formData.append('icon', subCategoryIcon.byte)
+        formData.append('categoryid', categories)
+        formData.append('description', description)
 
-        var result = await postDataAndImage("category/addcategories", formData)
+
+        var result = await postDataAndImage("subcategory/addsubcategories", formData)
+
         if (result.result) {
 
             Swal.fire({
                 icon: 'success',
                 title: 'Best Meds',
-                text: 'Categories Added',
+                text: 'Sub Categories Added',
                 imageUrl: 'pharmacy.jpg',
                 imageHeight: 150,
-                imageWidth:150,
+                imageWidth: 150,
                 imageAlt: 'Custom image'
 
             })
@@ -94,13 +131,14 @@ export default function Category(props) {
                 text: 'Failed',
                 imageUrl: 'pharmacy.jpg',
                 imageHeight: 150,
-                imageWidth:150,
+                imageWidth: 150,
                 imageAlt: 'Custom image'
             })
         }
 
-        
+
     }
+
 
     return (
         <div className={classes.root}>
@@ -110,13 +148,33 @@ export default function Category(props) {
                     <Grid item xs={12}>
                         <div style={{ padding: 5, fontSize: 20, fontWeight: 'bold', letterSpacing: 1, display: "flex", alignItems: "center", justifyContent: 'center' }}>
                             <img src="categories.png" height={40} width={40} style={{ padding: 5 }} />
-                            Category Interface
+                            Sub Category Interface
                         </div>
                     </Grid>
 
                     <Grid item xs={6}>
-                        <CssTextField variant='outlined'   onChange={(event) => setCategoryName(event.target.value)} label='Category Name' sx={{ input: { color: '#fff' } }} fullWidth />
+                        <FormControl fullWidth>
+                            <InputLabel id="demo-simple-select-label">Categories</InputLabel>
+                            <Select
+                                labelId="demo-simple-select-label"
+                                id="demo-simple-select"
+                                value={categories}
+                                label="Categories"
+                                onChange={handleCategoriesChange}
+                                
+                            >
+                                {fillCategories()}
+                            </Select>
+                        </FormControl>
                     </Grid>
+
+                    <Grid item xs={6}>
+                        <CssTextField variant='outlined' onChange={(event) => setSubCategoryName(event.target.value)} label='Sub Category Name' sx={{ input: { color: '#fff' } }} fullWidth />
+                    </Grid>
+                    <Grid item xs={6}>
+                        <CssTextField variant='outlined' onChange={(event) => setDescription(event.target.value)} label='Description' sx={{ input: { color: '#fff' } }} fullWidth />
+                    </Grid>
+
 
                     <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
 
@@ -125,7 +183,7 @@ export default function Category(props) {
                             <input accept="image/*" onChange={(event) => handleIconChange(event)} id="contained-button-file" className={classes.inputClasses} multiple type="file" />
 
                             <Button variant="contained" component="span" style={{ backgroundColor: '#57606f' }} >
-                                Upload Category Icon
+                                Upload Sub Category Icon
                             </Button>
 
                         </label>
@@ -134,7 +192,7 @@ export default function Category(props) {
                     <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <Avatar
                             alt="Upload Image"
-                            src={categoryIcon.file}
+                            src={subCategoryIcon.file}
                             sx={{ width: 100, height: 100 }}
                             variant="square"
 
@@ -143,7 +201,7 @@ export default function Category(props) {
 
                     <Grid item xs={6}>
 
-                        <Button variant="contained" onClick={()=>handleSubmit()} style={{ backgroundColor: '#2c2c54' }} color="success" fullWidth component="span">
+                        <Button variant="contained" onClick={() => handleSubmit()} style={{ backgroundColor: '#2c2c54' }} color="success" fullWidth component="span">
                             Save Details
                         </Button>
                     </Grid>
@@ -158,4 +216,7 @@ export default function Category(props) {
             </div>
         </div>
     )
+
+
+
 }
